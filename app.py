@@ -21,7 +21,7 @@ Routes:
 import os
 import functools
 from datetime import datetime
-
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 from flask import (
     Flask, render_template, request, redirect, url_for,
     session, jsonify, send_file, flash
