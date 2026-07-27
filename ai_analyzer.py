@@ -1,0 +1,215 @@
+"""
+ai_analyzer.py
+------------------------------------------------------------
+Wraps Google's Gemini API to turn a structured forensic
+investigation summary into a professional, human-readable
+AI analysis report (Markdown), including:
+
+    * Executive Summary
+    * Evidence Analysis
+    * Suspicious Findings
+    * Attack Pattern
+    * Investigation Timeline Summary
+    * Possible MITRE ATT&CK Techniques
+    * Threat Assessment
+    * Recommended Investigation Steps
+    * Recommended Mitigation
+    * Final Conclusion
+
+If no API key is configured, or the API call fails for any
+reason (network, quota, invalid key), a clearly-labeled
+offline fallback summary is generated instead so the rest of
+the application keeps working.
+------------------------------------------------------------
+"""
+
+import os
+import logging
+from dotenv import load_dotenv
+
+load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+
+_genai_configured = False
+
+
+def _configure_genai():
+    """Lazily configures the google-generativeai client."""
+    global _genai_configured
+    if _genai_configured:
+        return True
+    if not GEMINI_API_KEY or GEMINI_API_KEY == "your-gemini-api-key-here":
+        return False
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=GEMINI_API_KEY)
+        _genai_configured = True
+        return True
+    except Exception as exc:  # pragma: no cover
+        logger.warning("Failed to configure Gemini client: %s", exc)
+        return False
+
+
+def _build_prompt(case_name, summary, risk_score, risk_level, sample_incidents):
+    """
+    Builds a structured prompt describing the investigation so
+    Gemini can generate an analyst-style report. We only send
+    aggregated statistics and a small sample of incidents
+    (never entire raw log files) to keep the prompt compact.
+    """
+    top_categories = sorted(
+        summary["category_counts"].items(), key=lambda x: x[1], reverse=True
+    )[:10]
+
+    incident_lines = []
+    for inc in sample_incidents[:20]:
+        incident_lines.append(
+            f"- [{inc.get('severity')}] {inc.get('category')} "
+            f"(user={inc.get('username')}, src_ip={inc.get('source_ip')}, "
+            f"time={inc.get('timestamp')}): {inc.get('description')}"
+        )
+
+    prompt = f"""
+You are a senior digital forensics and incident response (DFIR) analyst.
+Analyze the following investigation data and produce a professional
+forensic analysis report in clean Markdown.
+
+CASE NAME: {case_name}
+OVERALL RISK SCORE: {risk_score}/100 ({risk_level})
+TOTAL INCIDENTS DETECTED: {summary['total_incidents']}
+
+SEVERITY BREAKDOWN:
+{summary['severity_counts']}
+
+TOP INCIDENT CATEGORIES:
+{top_categories}
+
+TOP SUSPICIOUS USERS:
+{summary['suspicious_users']}
+
+TOP SUSPICIOUS HOSTS/IPs:
+{summary['suspicious_hosts']}
+
+SAMPLE DETECTED INCIDENTS:
+{chr(10).join(incident_lines) if incident_lines else "No individual incidents available."}
+
+Produce the report using EXACTLY these Markdown section headers, in this order:
+
+## Executive Summary
+## Evidence Analysis
+## Suspicious Findings
+## Attack Pattern
+## Investigation Timeline Summary
+## Possible MITRE ATT&CK Techniques
+## Threat Assessment
+## Recommended Investigation Steps
+## Recommended Mitigation
+## Final Conclusion
+
+Guidelines:
+- Be specific and reference the actual categories/users/IPs given above.
+- For "Possible MITRE ATT&CK Techniques", map detected categories to
+  plausible MITRE ATT&CK technique IDs and names (e.g. T1110 Brute Force).
+- Keep the tone professional, objective, and suitable for a formal
+  digital forensics report submitted to stakeholders.
+- Do not fabricate evidence that isn't implied by the data given.
+- Keep the whole report reasonably concise (roughly 500-800 words).
+"""
+    return prompt.strip()
+
+
+def _offline_fallback_report(case_name, summary, risk_score, risk_level):
+    """
+    Deterministic, template-based report used when Gemini is not
+    configured or unreachable, so the application remains fully
+    functional in offline / no-API-key environments (e.g. for
+    grading or demos without internet access).
+    """
+    top_categories = sorted(
+        summary["category_counts"].items(), key=lambda x: x[1], reverse=True
+    )[:5]
+    cat_list = "\n".join(f"- {c}: {n} occurrence(s)" for c, n in top_categories) or "- No categories detected."
+
+    users = ", ".join(u for u, _ in summary["suspicious_users"][:5]) or "None identified"
+    hosts = ", ".join(h for h, _ in summary["suspicious_hosts"][:5]) or "None identified"
+
+    return f"""## Executive Summary
+This automated (offline) analysis of case **{case_name}** identified
+{summary['total_incidents']} notable events across the submitted evidence,
+resulting in an overall risk score of **{risk_score}/100 ({risk_level})**.
+*Note: This report was generated by the offline rule-based fallback
+because no Gemini API key was configured. Configure GEMINI_API_KEY in
+.env for full AI-generated analysis.*
+
+## Evidence Analysis
+The evidence was parsed and scanned against a library of forensic
+detection rules covering authentication, privilege escalation, malware
+indicators, network activity, and file system events.
+
+## Suspicious Findings
+{cat_list}
+
+## Attack Pattern
+Based on the detected categories, the activity pattern is consistent
+with {"credential-based attacks and reconnaissance" if risk_score > 40 else "routine or low-risk activity"}.
+
+## Investigation Timeline Summary
+A total of {len(summary['timeline'])} timestamped events were captured
+and can be reviewed in the investigation timeline view.
+
+## Possible MITRE ATT&CK Techniques
+- T1110 Brute Force (if brute-force events present)
+- T1078 Valid Accounts
+- T1548 Abuse Elevation Control Mechanism
+- T1059 Command and Scripting Interpreter
+
+## Threat Assessment
+Risk Level: **{risk_level}**. Suspicious users: {users}. Suspicious
+hosts: {hosts}.
+
+## Recommended Investigation Steps
+1. Correlate flagged events with authentication and network logs.
+2. Validate whether flagged accounts and IPs are authorized.
+3. Preserve original evidence files for chain-of-custody.
+
+## Recommended Mitigation
+- Enforce account lockout / rate limiting on authentication endpoints.
+- Patch and monitor systems showing privilege escalation indicators.
+- Review firewall rules for flagged suspicious IP addresses.
+
+## Final Conclusion
+This case has been logged with a risk level of **{risk_level}**.
+Further manual review by a certified forensic analyst is recommended
+before closing the investigation.
+"""
+
+
+def generate_ai_analysis(case_name, summary, risk_score, risk_level, incidents):
+    """
+    Main entry point. Returns a Markdown-formatted AI analysis
+    string. Falls back to a deterministic offline report if the
+    Gemini API is not available.
+    """
+    if not _configure_genai():
+        return _offline_fallback_report(case_name, summary, risk_score, risk_level)
+
+    try:
+        import google.generativeai as genai
+        model = genai.GenerativeModel(GEMINI_MODEL)
+        prompt = _build_prompt(case_name, summary, risk_score, risk_level, incidents)
+        response = model.generate_content(prompt)
+        text = getattr(response, "text", None)
+        if not text:
+            raise ValueError("Empty response from Gemini API")
+        return text
+    except Exception as exc:
+        logger.warning("Gemini API call failed, using offline fallback: %s", exc)
+        fallback = _offline_fallback_report(case_name, summary, risk_score, risk_level)
+        return (
+            f"> ⚠️ AI service unavailable ({exc}). Showing offline fallback report.\n\n"
+            + fallback
+        )
