@@ -1,0 +1,286 @@
+/* ==========================================================
+   AI Digital Forensics Assistant — SOC Dark Theme
+   Palette: deep navy/black base, electric blue + cyan accents,
+   severity colors for red/orange/yellow/green signal states.
+   ========================================================== */
+
+:root {
+  --bg-void: #060a14;
+  --bg-panel: #0d1424;
+  --bg-panel-2: #101a30;
+  --border-soft: #1c2740;
+  --accent-blue: #2f6fed;
+  --accent-cyan: #22d3ee;
+  --text-primary: #e6ecf7;
+  --text-muted: #8a93a8;
+
+  --sev-critical: #ef4444;
+  --sev-high: #f97316;
+  --sev-medium: #eab308;
+  --sev-low: #22c55e;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg-void);
+  color: var(--text-primary);
+}
+
+code { color: var(--accent-cyan); }
+
+/* ---------------- Login Page ---------------- */
+
+.login-body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(47,111,237,0.18), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(34,211,238,0.12), transparent 40%),
+    var(--bg-void);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-scanline {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+  animation: scan 4s linear infinite;
+  opacity: .6;
+}
+@keyframes scan {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(100vh); }
+}
+
+.login-wrapper { width: 100%; max-width: 420px; padding: 1rem; z-index: 1; }
+
+.login-card {
+  background: rgba(13, 20, 36, 0.85);
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.login-brand { text-align: center; margin-bottom: 1.5rem; }
+.brand-icon {
+  width: 64px; height: 64px; margin: 0 auto 1rem;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+  font-size: 1.6rem;
+  box-shadow: 0 0 30px rgba(47,111,237,0.5);
+}
+.login-brand h1 {
+  font-size: 1.3rem; font-weight: 700; margin: 0;
+  color: var(--text-primary);
+}
+.login-brand h1 span { display: block; font-size: .95rem; color: var(--accent-cyan); font-weight: 500; }
+.brand-sub { color: var(--text-muted); font-size: .78rem; margin-top: .5rem; letter-spacing: .03em; }
+
+.login-body .form-control, .login-body .input-group-text {
+  background: var(--bg-panel-2);
+  border-color: var(--border-soft);
+  color: var(--text-primary);
+}
+.login-body .form-control:focus {
+  background: var(--bg-panel-2);
+  color: var(--text-primary);
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 .2rem rgba(47,111,237,.25);
+}
+.login-body .form-label { color: var(--text-muted); letter-spacing: .05em; }
+
+.btn-forensic {
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+  border: none;
+  color: #04101f;
+  font-weight: 600;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.btn-forensic:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(47,111,237,.4);
+  color: #04101f;
+}
+
+.login-footer {
+  margin-top: 1.5rem; text-align: center;
+  font-size: .75rem; color: var(--text-muted);
+}
+
+/* ---------------- Dashboard Layout ---------------- */
+
+.dash-body { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 230px;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 0;
+  position: sticky;
+  top: 0; height: 100vh;
+}
+.sidebar-brand {
+  display: flex; align-items: center; gap: .6rem;
+  padding: 0 1.25rem 1.25rem;
+  border-bottom: 1px solid var(--border-soft);
+  font-weight: 700; font-size: 1.05rem;
+}
+.sidebar-brand i { color: var(--accent-cyan); font-size: 1.3rem; }
+.sidebar-brand small { display: block; color: var(--text-muted); font-weight: 400; font-size: .68rem; }
+
+.sidebar-nav { list-style: none; padding: 1rem 0.6rem; margin: 0; flex: 1; }
+.sidebar-nav li {
+  padding: .7rem .9rem; border-radius: 8px; margin-bottom: .3rem;
+  color: var(--text-muted); cursor: pointer;
+  display: flex; align-items: center; gap: .7rem;
+  font-size: .88rem; transition: background .15s ease, color .15s ease;
+}
+.sidebar-nav li i { width: 18px; text-align: center; }
+.sidebar-nav li:hover { background: var(--bg-panel-2); color: var(--text-primary); }
+.sidebar-nav li.active {
+  background: linear-gradient(90deg, rgba(47,111,237,.18), transparent);
+  color: var(--accent-cyan);
+  border-left: 3px solid var(--accent-cyan);
+}
+
+.sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border-soft); }
+.user-chip { font-size: .8rem; color: var(--text-muted); margin-bottom: .6rem; }
+.logout-link { color: var(--sev-critical); font-size: .82rem; text-decoration: none; }
+.logout-link:hover { color: #fca5a5; }
+
+.main-content { flex: 1; min-width: 0; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.25rem 2rem;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--bg-panel);
+  position: sticky; top: 0; z-index: 5;
+}
+
+/* ---------------- Stat Cards ---------------- */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem 2rem 0;
+}
+.stat-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 1.1rem;
+  display: flex; align-items: center; gap: .9rem;
+  transition: transform .15s ease;
+}
+.stat-card:hover { transform: translateY(-2px); border-color: var(--accent-blue); }
+.stat-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+.stat-icon.blue   { background: rgba(47,111,237,.18); color: var(--accent-blue); }
+.stat-icon.cyan   { background: rgba(34,211,238,.18); color: var(--accent-cyan); }
+.stat-icon.red    { background: rgba(239,68,68,.18); color: var(--sev-critical); }
+.stat-icon.orange { background: rgba(249,115,22,.18); color: var(--sev-high); }
+.stat-icon.yellow { background: rgba(234,179,8,.18); color: var(--sev-medium); }
+.stat-icon.green  { background: rgba(34,197,94,.18); color: var(--sev-low); }
+
+.stat-value { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+.stat-label { font-size: .75rem; color: var(--text-muted); margin-top: .25rem; }
+
+/* ---------------- Charts ---------------- */
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  padding: 1rem 2rem;
+}
+.chart-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 1.1rem;
+}
+.chart-card.wide { grid-column: span 2; }
+@media (max-width: 900px) { .chart-card.wide { grid-column: span 1; } }
+.chart-card h6 { font-size: .85rem; color: var(--text-muted); margin-bottom: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+
+/* Tables */
+.table-dark { --bs-table-bg: transparent; font-size: .82rem; }
+.table-dark thead { color: var(--text-muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+.evidence-list { background: transparent; }
+.evidence-list .list-group-item {
+  background: transparent; border-color: var(--border-soft); color: var(--text-primary);
+}
+
+/* Badges for severity/risk */
+.badge { font-weight: 600; font-size: .68rem; padding: .35em .6em; }
+.sev-critical, .risk-critical { background: var(--sev-critical); color: #fff; }
+.sev-high, .risk-high         { background: var(--sev-high); color: #1a1200; }
+.sev-medium, .risk-medium     { background: var(--sev-medium); color: #1a1200; }
+.sev-low, .risk-low           { background: var(--sev-low); color: #04170c; }
+.risk-safe                    { background: #16a34a; color: #04170c; }
+
+/* ---------------- Modal ---------------- */
+.dark-modal { background: var(--bg-panel); color: var(--text-primary); border: 1px solid var(--border-soft); }
+.dark-modal .modal-header, .dark-modal .modal-footer { border-color: var(--border-soft); }
+.dark-modal .form-control {
+  background: var(--bg-panel-2); border-color: var(--border-soft); color: var(--text-primary);
+}
+.dark-modal .form-control:focus {
+  background: var(--bg-panel-2); color: var(--text-primary); border-color: var(--accent-blue);
+  box-shadow: 0 0 0 .2rem rgba(47,111,237,.25);
+}
+
+/* ---------------- Report Page ---------------- */
+
+.risk-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.5rem 2rem; border-radius: 14px; margin-bottom: 1.25rem;
+  border: 1px solid var(--border-soft);
+}
+.risk-banner-label { font-size: .78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.risk-banner-value { font-size: 2.2rem; font-weight: 800; }
+.risk-banner-badge {
+  padding: .5rem 1.2rem; border-radius: 999px; font-weight: 700; font-size: .95rem;
+}
+.risk-bg-safe .risk-banner-badge, .risk-bg-low .risk-banner-badge { background: var(--sev-low); color: #04170c; }
+.risk-bg-medium .risk-banner-badge { background: var(--sev-medium); color: #1a1200; }
+.risk-bg-high .risk-banner-badge { background: var(--sev-high); color: #1a1200; }
+.risk-bg-critical .risk-banner-badge { background: var(--sev-critical); color: #fff; }
+.risk-bg-safe { border-left: 5px solid var(--sev-low); }
+.risk-bg-low { border-left: 5px solid var(--sev-low); }
+.risk-bg-medium { border-left: 5px solid var(--sev-medium); }
+.risk-bg-high { border-left: 5px solid var(--sev-high); }
+.risk-bg-critical { border-left: 5px solid var(--sev-critical); }
+
+.report-section {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.report-section h6 { color: var(--accent-cyan); text-transform: uppercase; font-size: .82rem; letter-spacing: .04em; margin-bottom: 1rem; }
+
+.ai-markdown { font-size: .9rem; line-height: 1.7; }
+.ai-markdown h2 {
+  font-size: 1.05rem; color: var(--accent-blue); margin-top: 1.25rem;
+  border-bottom: 1px solid var(--border-soft); padding-bottom: .3rem;
+}
+.ai-markdown ul { padding-left: 1.2rem; }
+.ai-markdown code { background: var(--bg-panel-2); padding: .1rem .35rem; border-radius: 4px; }
